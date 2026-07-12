@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Task Dashboard</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+        table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .nav { margin-bottom: 20px; }
+        .nav a { margin-right: 15px; }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        {% if user.is_authenticated %}
+            Logged in as {{ user.username }} ({{ user.get_role_display }})
+            <a href="{% url 'dashboard:redirect' %}">Dashboard</a>
+            <a href="/admin/">Django Admin</a>
+            <a href="/api/docs/">API Docs</a>
+            <a href="/api/v1/auth/logout/">Logout</a> <!-- We'll need a logout link that POSTs later -->
+        {% else %}
+            <a href="/api/v1/auth/login/">Login</a>
+        {% endif %}
+    </div>
+    <hr>
+    {% block content %}{% endblock %}
+</body>
+</html>

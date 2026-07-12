@@ -1,0 +1,14 @@
+{% extends "dashboard/base.html" %}
+{% block content %}
+<h1>Admin Dashboard – All Tasks</h1>
+<table>
+    <tr><th>ID</th><th>Title</th><th>Creator</th><th>Status</th><th>Reviewer</th><th>Assignees</th></tr>
+    {% for task in all_tasks %}
+    <tr>
+        <td>{{ task.id }}</td><td>{{ task.title }}</td><td>{{ task.creator.username }}</td>
+        <td>{{ task.status }}</td><td>{{ task.reviewer.username|default:"-" }}</td>
+        <td>{% for a in task.assignees.all %}{{ a.username }}{% if not forloop.last %}, {% endif %}{% empty %}-{% endfor %}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

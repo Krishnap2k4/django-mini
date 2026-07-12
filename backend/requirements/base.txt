@@ -1,0 +1,15 @@
+Django==5.0.7
+psycopg2-binary==2.9.9
+redis==5.0.7
+python-dotenv==1.0.1
+gunicorn==22.0.0        # we'll use this in prod
+djangorestframework==3.15.1   # not used yet but will be soon
+djangorestframework-simplejwt==5.3.1
+drf-spectacular==0.27.2   # OpenAPI 3 schema + Swagger UI
+django-filter==24.2
+drf-nested-routers==0.93.4
+
+celery==5.4.0
+django-celery-results==2.5.1
+
+django-celery-beat==2.6.0

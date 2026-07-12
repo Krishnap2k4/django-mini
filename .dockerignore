@@ -1,0 +1,10 @@
+**/__pycache__
+**/*.pyc
+**/*.pyo
+.git
+.env
+*.env
+backend/venv
+backend/.venv
+backend/staticfiles
+backend/media

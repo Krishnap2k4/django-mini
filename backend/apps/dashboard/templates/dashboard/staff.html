@@ -1,0 +1,20 @@
+{% extends "dashboard/base.html" %}
+{% block content %}
+<h1>My Tasks</h1>
+<p>Draft: {{ counts.draft }}, Submitted: {{ counts.submitted }}, Needs Reviewer: {{ counts.needs_reviewer }}, Approved: {{ counts.approved }}, Rejected: {{ counts.rejected }}</p>
+<table>
+    <tr>
+        <th>Title</th><th>Status</th><th>Priority</th><th>Due Date</th><th>Reviewer</th><th>Assignees</th>
+    </tr>
+    {% for task in tasks %}
+    <tr>
+        <td>{{ task.title }}</td>
+        <td>{{ task.status }}</td>
+        <td>{{ task.priority }}</td>
+        <td>{{ task.due_date|default:"-" }}</td>
+        <td>{{ task.reviewer.username|default:"Unassigned" }}</td>
+        <td>{% for a in task.assignees.all %}{{ a.username }}{% if not forloop.last %}, {% endif %}{% empty %}None{% endfor %}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

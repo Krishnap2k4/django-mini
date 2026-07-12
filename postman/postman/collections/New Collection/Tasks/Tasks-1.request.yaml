@@ -1,0 +1,22 @@
+$kind: http-request
+name: Tasks
+url: http://localhost:8000/api/v1/tasks/
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"title\": \"This is the task title\",\r
+
+    \  \"description\": \"This is the task description\",\r
+
+    \  \"priority\": \"MEDIUM\",\r
+
+    \  \"due_date\": \"2026-07-10\"\r
+
+    }"
+auth:
+  type: bearer
+  credentials:
+    token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzgzNjc4MzM3LCJpYXQiOjE3ODM2Nzc0MzcsImp0aSI6ImUyZTRjNjE2MDQ5ZjQzZGI4YzU3NGY0NmFhZDlkNmU0IiwidXNlcl9pZCI6NX0.yRcQHE4_mb5jfRLfCWvQPO7UFQBPEgZMMKzakRY8Aq0
+order: 2952226114832145
