@@ -13,7 +13,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 
 from apps.users.models import User
-from apps.tasks.models import Task
+from apps.tasks.models import Task, TaskStatus
 from .models import Notification
 
 logger = logging.getLogger(__name__)
@@ -87,3 +87,45 @@ def send_task_notification(self, user_id, task_id, event_type):
 
     except Exception as exc:
         raise self.retry(exc=exc)
+
+
+@shared_task
+def send_daily_digest():
+    """
+    Finds all users who are assigned as a reviewer for SUBMITTED tasks.
+    Sends them a single summary email.
+    Scheduled to run daily at 8:00 AM via django_celery_beat.
+    """
+    users = User.objects.filter(
+        tasks_to_review__status=TaskStatus.SUBMITTED
+    ).distinct()
+
+    emails_sent = 0
+    for user in users:
+        # Count tasks pending this user's approval
+        pending_count = Task.objects.filter(
+            reviewer=user,
+            status=TaskStatus.SUBMITTED
+        ).count()
+
+        if pending_count > 0 and user.email:
+            subject = "Daily Digest: Tasks Waiting For Your Approval"
+            message = (
+                f"Hello {user.username},\n\n"
+                f"You have {pending_count} task(s) currently waiting for your review and approval.\n"
+                "Please log in to the Task Approval Workflow System to take action.\n\n"
+                "Thank you!"
+            )
+            try:
+                send_mail(
+                    subject=subject,
+                    message=message,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[user.email],
+                    fail_silently=False,
+                )
+                emails_sent += 1
+            except Exception as e:
+                logger.error("Failed to send daily digest to %s: %s", user.email, e)
+
+    return f"Daily digest sent to {emails_sent} users."
