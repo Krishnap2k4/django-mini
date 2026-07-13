@@ -34,7 +34,7 @@ services:
       context: ./backend
       target: dev           # we’ll define multi‑stage Dockerfile
     container_name: task_backend
-    command: python manage.py runserver 0.0.0.0:8000
+    command: daphne -b 0.0.0.0 -p 8000 config.asgi:application
     volumes:
       - ./backend:/app      # live code reload
     env_file:

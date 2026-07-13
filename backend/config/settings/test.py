@@ -11,6 +11,16 @@ CACHES = {
     }
 }
 
+# In-memory channel layer for tests — no Redis dependency
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    }
+}
+
+# Capture emails in memory during tests (accessible via django.core.mail.outbox)
+EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
+
 # Faster password hashing for tests
 PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.MD5PasswordHasher',

@@ -11,15 +11,13 @@ class Command(BaseCommand):
         parser.add_argument('--department', default='')
 
     def handle(self, *args, **options):
-        if User.objects.filter(username=options['username']).exists():
-            self.stderr.write("User with that username already exists.")
-            return
-
-        user = User.objects.create_user(
-            username=options['username'],
-            email=options['email'],
-            password=options['password'],
-            role=Role.SUPERADMIN,
-            department=options['department'],
-        )
+        user, _ = User.objects.get_or_create(username=options['username'])
+        user.email = options['email']
+        user.role = Role.SUPERADMIN
+        user.department = options['department']
+        user.is_active = True
+        user.is_staff = True
+        user.is_superuser = True
+        user.set_password(options['password'])
+        user.save()
         self.stdout.write(self.style.SUCCESS(f"Superadmin '{user.username}' created."))

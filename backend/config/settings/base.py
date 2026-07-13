@@ -9,6 +9,7 @@ DEBUG = os.environ.get("DEBUG", "False") == "True"
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost 127.0.0.1").split()
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -65,6 +66,17 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
+ASGI_APPLICATION = 'config.asgi.application'
+
+# Channel Layers — uses the same Redis instance as Celery broker
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [os.environ['REDIS_URL']],
+        },
+    },
+}
 
 DATABASES = {
     'default': {
@@ -97,7 +109,7 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 MEDIA_URL = '/media/'
@@ -172,3 +184,12 @@ CORS_ALLOWED_ORIGINS = os.environ.get(
     "http://localhost:5173 http://localhost:3000"
 ).split()
 CORS_ALLOW_CREDENTIALS = True
+
+# Email — SMTP configuration (strict NODEMAILER_* contract)
+EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = os.environ['NODEMAILER_HOST']
+EMAIL_PORT = int(os.environ['NODEMAILER_PORT'])
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() == 'true'
+EMAIL_HOST_USER = os.environ['NODEMAILER_EMAIL']
+EMAIL_HOST_PASSWORD = os.environ['NODEMAILER_PASSWORD']
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', os.environ['NODEMAILER_EMAIL'])

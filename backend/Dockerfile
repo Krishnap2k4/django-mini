@@ -29,8 +29,8 @@ RUN addgroup --system django && adduser --system --ingroup django django \
 
 COPY --from=builder /wheels /wheels
 COPY requirements/ /tmp/requirements/
-RUN pip install --no-cache-dir /wheels/* -r /tmp/requirements/dev.txt
+RUN pip install --no-cache-dir --find-links=/wheels -r /tmp/requirements/dev.txt
 
 COPY . .
 USER django
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "config.asgi:application"]

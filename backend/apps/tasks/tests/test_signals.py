@@ -5,7 +5,7 @@ from apps.users.models import User, Role
 from apps.tasks.models import Task, TaskStatus, TaskStatusHistory
 from apps.tasks.services import transition_task, assign_reviewer
 
-@pytest.mark.django_db
+@pytest.mark.django_db(transaction=True)
 class TestSignals:
     def setup_method(self):
         self.creator = User.objects.create_user(username='creator', password='p')
