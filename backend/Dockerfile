@@ -22,11 +22,14 @@ RUN pip install --no-cache-dir --upgrade pip \
 # ---- Dev stage (used by docker-compose) ----
 FROM base AS dev
 
-RUN addgroup --system django && adduser --system --ingroup django django
+RUN addgroup --system django && adduser --system --ingroup django django \
+    && mkdir -p /app/media /app/staticfiles \
+    && chown -R django:django /app/media /app/staticfiles
+
 
 COPY --from=builder /wheels /wheels
-COPY requirements/dev.txt /tmp/requirements.txt
-RUN pip install --no-cache-dir /wheels/* -r /tmp/requirements.txt
+COPY requirements/ /tmp/requirements/
+RUN pip install --no-cache-dir /wheels/* -r /tmp/requirements/dev.txt
 
 COPY . .
 USER django

@@ -21,7 +21,7 @@ class DashboardRedirectView(LoginRequiredMixin, RedirectView):
         else:
             return reverse_lazy('dashboard:staff')
 
-class StaffDashboardView(LoginRequiredMixin, TemplateView):
+class StaffDashboardView(RoleRequiredMixin, TemplateView):
     template_name = 'dashboard/staff.html'
     required_role = Role.STAFF
 

@@ -16,24 +16,27 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    # Other apps
+    # Third-party apps
+    'corsheaders',
     'drf_spectacular',
     'django_filters',
     'django_celery_results',
+    'django_celery_beat',
     'rest_framework',
     'rest_framework_simplejwt',
-    'rest_framework_simplejwt.token_blacklist',   # ← this line is missing
+    'rest_framework_simplejwt.token_blacklist',
 
     # Our apps
     'apps.health',
     'apps.users',
     'apps.tasks',
     'apps.core',
-    'apps.notifications',   # we'll create next
-    'apps.dashboard'
+    'apps.notifications',
+    'apps.dashboard',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -69,8 +72,8 @@ DATABASES = {
         'NAME': os.environ['POSTGRES_DB'],
         'USER': os.environ['POSTGRES_USER'],
         'PASSWORD': os.environ['POSTGRES_PASSWORD'],
-        'HOST': 'db',
-        'PORT': '5432',
+        'HOST': os.environ.get('DATABASE_HOST', 'db'),
+        'PORT': os.environ.get('DATABASE_PORT', '5432'),
     }
 }
 
@@ -93,7 +96,13 @@ LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
+
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Custom user model (must be set before any migration)
@@ -154,5 +163,12 @@ CELERY_IMPORTS = ('apps.notifications.tasks',)
 
 CELERY_TASK_ALWAYS_EAGER = os.environ.get("CELERY_TASK_ALWAYS_EAGER", "False").lower() == "true"
 
-LOGIN_URL = '/panel/login/'   # or use reverse_lazy
+LOGIN_URL = '/panel/login/'
 LOGIN_REDIRECT_URL = '/panel/'
+
+# CORS — allow React dev server in development (override in prod.py)
+CORS_ALLOWED_ORIGINS = os.environ.get(
+    "CORS_ALLOWED_ORIGINS",
+    "http://localhost:5173 http://localhost:3000"
+).split()
+CORS_ALLOW_CREDENTIALS = True

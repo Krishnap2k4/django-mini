@@ -1,5 +1,7 @@
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.shortcuts import redirect
 from apps.users.models import Role
+
 
 class RoleRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     required_role = None

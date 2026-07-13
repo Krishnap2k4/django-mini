@@ -12,7 +12,7 @@ from .serializers import (
     AssignReviewerSerializer, SubmitTaskSerializer, ApproveRejectSerializer,
     TaskCommentSerializer, TaskAttachmentSerializer, TaskStatusHistorySerializer
 )
-from .services import transition_task, assign_reviewer
+from .services import transition_task, assign_reviewer as assign_reviewer_service
 from apps.core.permissions import (
     IsSuperAdmin, IsCreatorOrSuperAdmin, CanSubmitTask,
     CanAssignReviewer, IsAssignedReviewerOrSuperAdmin
@@ -72,7 +72,7 @@ class TaskViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         reviewer = serializer.validated_data['reviewer']
         try:
-            assign_reviewer(task, reviewer=reviewer, actor=request.user)
+            assign_reviewer_service(task, reviewer=reviewer, actor=request.user)
         except InvalidTransitionError as e:
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except PermissionDeniedError as e:
@@ -153,3 +153,13 @@ class TaskStatusHistoryViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         task_id = self.kwargs['task_pk']
         return TaskStatusHistory.objects.filter(task_id=task_id)
+
+
+class DashboardCountsView(viewsets.ViewSet):
+    """Returns cached per-user dashboard aggregate counts."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def list(self, request):
+        from .cache import get_dashboard_counts
+        counts = get_dashboard_counts(request.user)
+        return Response(counts)

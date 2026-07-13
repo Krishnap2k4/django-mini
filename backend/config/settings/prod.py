@@ -10,3 +10,6 @@ CSRF_COOKIE_SECURE = True
 
 # Production Celery: use the real Redis broker (eager mode is off by default)
 CELERY_TASK_ALWAYS_EAGER = False
+
+# CORS: strictly from environment in prod
+CORS_ALLOW_ALL_ORIGINS = False

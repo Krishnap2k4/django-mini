@@ -7,7 +7,7 @@ from .models import Task, TaskComment, TaskAttachment, TaskStatusHistory, TaskSt
 class TaskSerializer(serializers.ModelSerializer):
     # Display fields (read-only for list/detail)
     creator_name = serializers.CharField(source='creator.username', read_only=True)
-    reviewer_name = serializers.CharField(source='reviewer.username', read_only=True)
+    reviewer_name = serializers.CharField(source='reviewer.username', read_only=True, default=None, allow_null=True)
     assignees_names = serializers.SerializerMethodField()
 
     class Meta:
@@ -48,10 +48,6 @@ class TaskSerializer(serializers.ModelSerializer):
 class TaskCreateSerializer(TaskSerializer):
     class Meta(TaskSerializer.Meta):
         read_only_fields = ['creator', 'created_at', 'updated_at', 'status']
-
-    def create(self, validated_data):
-        validated_data['creator'] = self.context['request'].user
-        return super().create(validated_data)
 
 
 class TaskUpdateSerializer(TaskSerializer):
