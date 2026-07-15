@@ -1,0 +1,96 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Users{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-between align-center mb-3">
+    <form method="get" class="filter-bar">
+        <div class="search-input">
+            <span class="material-icons-round">search</span>
+            <input type="text" name="q" class="form-control" placeholder="Search users..."
+                   value="{{ q }}">
+        </div>
+        <select name="role" class="form-select" onchange="this.form.submit()">
+            <option value="">All Roles</option>
+            {% for value, label in roles %}
+                <option value="{{ value }}" {% if role == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary btn-sm">
+            <span class="material-icons-round">filter_list</span> Filter
+        </button>
+    </form>
+    <a href="{% url 'dashboard:user-create' %}" class="btn btn-primary">
+        <span class="material-icons-round">person_add</span> New User
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Name</th>
+                        <th>Role</th>
+                        <th>Department</th>
+                        <th>Status</th>
+                        <th>Joined</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in page_obj %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'dashboard:user-detail' pk=u.pk %}" style="color:var(--primary);text-decoration:none;font-weight:500;">
+                                {{ u.username }}
+                            </a>
+                        </td>
+                        <td class="text-muted">{{ u.email|default:"-" }}</td>
+                        <td>{{ u.get_full_name|default:"-" }}</td>
+                        <td><span class="badge badge-{{ u.role|lower }}">{{ u.get_role_display }}</span></td>
+                        <td>{{ u.department|default:"-" }}</td>
+                        <td>
+                            {% if u.is_active %}
+                                <span class="badge badge-approved">Active</span>
+                            {% else %}
+                                <span class="badge badge-rejected">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-muted text-sm">{{ u.date_joined|date:"M d, Y" }}</td>
+                        <td>
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'dashboard:user-edit' pk=u.pk %}" class="btn btn-outline btn-sm" title="Edit">
+                                    <span class="material-icons-round">edit</span>
+                                </a>
+                                <form method="post" action="{% url 'dashboard:user-delete' pk=u.pk %}"
+                                      onsubmit="return confirm('Deactivate {{ u.username }}?')">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger btn-sm" title="Deactivate">
+                                        <span class="material-icons-round">person_off</span>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8">
+                            <div class="empty-state">
+                                <span class="material-icons-round">people</span>
+                                <p>No users found</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% include "dashboard/partials/_pagination.html" %}
+{% endblock %}

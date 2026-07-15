@@ -89,6 +89,60 @@ def send_task_notification(self, user_id, task_id, event_type):
         raise self.retry(exc=exc)
 
 
+@shared_task(bind=True, max_retries=3, default_retry_delay=30)
+def send_custom_notification(self, user_id, message_text, send_email):
+    """Celery task for sending ad-hoc manual notifications from the admin panel."""
+    try:
+        user = User.objects.get(pk=user_id)
+    except User.DoesNotExist:
+        return
+
+    try:
+        # 1. Save to database
+        notification = Notification.objects.create(
+            recipient=user,
+            notification_type='ADMIN_MESSAGE',
+            message=message_text,
+        )
+
+        # 2. Push via WebSocket
+        try:
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                f"notifications_user_{user_id}",
+                {
+                    "type": "send_notification",
+                    "data": {
+                        "id": notification.id,
+                        "type": "ADMIN_MESSAGE",
+                        "message": message_text,
+                        "task_id": None,
+                        "task_title": None,
+                        "is_read": False,
+                        "created_at": str(notification.created_at),
+                    },
+                },
+            )
+        except Exception as ws_err:
+            logger.warning("WebSocket push failed: %s", ws_err)
+
+        # 3. Send email
+        if send_email and user.email:
+            try:
+                send_mail(
+                    subject="[Task Approval] Admin Notification",
+                    message=message_text,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[user.email],
+                    fail_silently=False,
+                )
+            except Exception as email_err:
+                logger.warning("Email send failed: %s", email_err)
+
+    except Exception as exc:
+        raise self.retry(exc=exc)
+
+
 @shared_task
 def send_daily_digest():
     """

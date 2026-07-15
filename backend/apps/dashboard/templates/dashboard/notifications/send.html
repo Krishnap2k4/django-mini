@@ -1,0 +1,36 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Send Notification{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width:600px;">
+    <div class="card-header">
+        <h3>Send Notification</h3>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="id_recipient">Recipient</label>
+                {{ form.recipient }}
+            </div>
+            <div class="form-group">
+                <label for="id_message">Message</label>
+                {{ form.message }}
+            </div>
+            <div class="form-group">
+                <div class="form-check">
+                    {{ form.send_email }}
+                    <label for="id_send_email">Also send email notification</label>
+                </div>
+            </div>
+            <div class="d-flex gap-2 mt-2">
+                <button type="submit" class="btn btn-primary">
+                    <span class="material-icons-round">send</span> Send
+                </button>
+                <a href="{% url 'dashboard:notification-list' %}" class="btn btn-outline">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

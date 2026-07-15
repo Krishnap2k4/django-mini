@@ -1,0 +1,99 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Notifications{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-between align-center mb-3">
+    <form method="get" class="filter-bar">
+        <select name="type" class="form-select" onchange="this.form.submit()">
+            <option value="">All Types</option>
+            {% for t in notification_types %}
+                <option value="{{ t }}" {% if ntype == t %}selected{% endif %}>{{ t }}</option>
+            {% endfor %}
+        </select>
+        <select name="read" class="form-select" onchange="this.form.submit()">
+            <option value="">All</option>
+            <option value="false" {% if read == "false" %}selected{% endif %}>Unread</option>
+            <option value="true" {% if read == "true" %}selected{% endif %}>Read</option>
+        </select>
+    </form>
+    <div class="d-flex gap-2">
+        <form method="post" action="{% url 'dashboard:notification-mark-all-read' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline">
+                <span class="material-icons-round">done_all</span> Mark All Read
+            </button>
+        </form>
+        <a href="{% url 'dashboard:notification-send' %}" class="btn btn-primary">
+            <span class="material-icons-round">send</span> Send Notification
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width:30px;"></th>
+                    <th>Recipient</th>
+                    <th>Type</th>
+                    <th>Message</th>
+                    <th>Task</th>
+                    <th>Date</th>
+                    <th style="width:60px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for n in page_obj %}
+                <tr style="{% if not n.is_read %}background:rgba(124,58,237,0.03);{% endif %}">
+                    <td>
+                        {% if not n.is_read %}
+                            <span style="color:var(--primary);font-size:10px;">●</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'dashboard:user-detail' pk=n.recipient.pk %}" style="color:var(--primary);text-decoration:none;">
+                            {{ n.recipient.username }}
+                        </a>
+                    </td>
+                    <td><span class="badge badge-submitted">{{ n.notification_type }}</span></td>
+                    <td style="max-width:300px;">{{ n.message }}</td>
+                    <td>
+                        {% if n.task %}
+                            <a href="{% url 'dashboard:task-detail' pk=n.task.pk %}" style="color:var(--primary);text-decoration:none;">
+                                {{ n.task.title|truncatechars:30 }}
+                            </a>
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-muted text-sm">{{ n.created_at|timesince }} ago</td>
+                    <td>
+                        {% if not n.is_read %}
+                        <form method="post" action="{% url 'dashboard:notification-mark-read' pk=n.pk %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline btn-sm" title="Mark as read">
+                                <span class="material-icons-round">check</span>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state">
+                            <span class="material-icons-round">notifications_off</span>
+                            <p>No notifications found</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% include "dashboard/partials/_pagination.html" %}
+{% endblock %}

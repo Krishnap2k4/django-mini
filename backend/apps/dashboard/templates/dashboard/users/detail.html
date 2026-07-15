@@ -1,0 +1,107 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}{{ profile_user.username }}{% endblock %}
+
+{% block content %}
+<!-- User Profile Card -->
+<div class="d-flex gap-3 mb-3" style="flex-wrap:wrap;">
+    <div class="card" style="flex:1; min-width:300px;">
+        <div class="card-body" style="text-align:center; padding:32px;">
+            <div class="topbar-avatar" style="width:72px;height:72px;font-size:28px;margin:0 auto 16px;">
+                {{ profile_user.username.0|upper }}
+            </div>
+            <h3 style="font-size:20px;">{{ profile_user.get_full_name|default:profile_user.username }}</h3>
+            <p class="text-muted">@{{ profile_user.username }}</p>
+            <div class="mt-1">
+                <span class="badge badge-{{ profile_user.role|lower }}">{{ profile_user.get_role_display }}</span>
+                {% if profile_user.is_active %}
+                    <span class="badge badge-approved">Active</span>
+                {% else %}
+                    <span class="badge badge-rejected">Inactive</span>
+                {% endif %}
+            </div>
+            <div class="mt-2 text-sm text-muted">
+                <p><strong>Email:</strong> {{ profile_user.email|default:"Not set" }}</p>
+                <p><strong>Department:</strong> {{ profile_user.department|default:"Not set" }}</p>
+                <p><strong>Joined:</strong> {{ profile_user.date_joined|date:"M d, Y" }}</p>
+                <p><strong>Last Login:</strong> {{ profile_user.last_login|date:"M d, Y H:i"|default:"Never" }}</p>
+            </div>
+            <div class="mt-2">
+                <a href="{% url 'dashboard:user-edit' pk=profile_user.pk %}" class="btn btn-primary btn-sm">
+                    <span class="material-icons-round">edit</span> Edit
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div style="flex:2; min-width:400px;">
+        <div class="stats-grid" style="margin-bottom:20px;">
+            <div class="stat-card">
+                <div class="stat-icon blue"><span class="material-icons-round">create</span></div>
+                <div class="stat-info">
+                    <h4>{{ created_tasks.count }}</h4>
+                    <p>Tasks Created</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green"><span class="material-icons-round">assignment_ind</span></div>
+                <div class="stat-info">
+                    <h4>{{ assigned_tasks.count }}</h4>
+                    <p>Tasks Assigned</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon orange"><span class="material-icons-round">rate_review</span></div>
+                <div class="stat-info">
+                    <h4>{{ review_tasks.count }}</h4>
+                    <p>Tasks to Review</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Created Tasks -->
+        <div class="card mb-3">
+            <div class="card-header"><h3>Created Tasks</h3></div>
+            <div class="card-body p-0">
+                <table>
+                    <thead><tr><th>Title</th><th>Status</th><th>Created</th></tr></thead>
+                    <tbody>
+                        {% for task in created_tasks %}
+                        <tr>
+                            <td><a href="{% url 'dashboard:task-detail' pk=task.pk %}" style="color:var(--primary);text-decoration:none;">{{ task.title }}</a></td>
+                            <td><span class="badge badge-{{ task.status|lower }}">{{ task.status }}</span></td>
+                            <td class="text-muted text-sm">{{ task.created_at|date:"M d, Y" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="3" class="text-muted text-sm" style="text-align:center;padding:20px;">No tasks</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Notifications -->
+<div class="card">
+    <div class="card-header"><h3>Recent Notifications</h3></div>
+    <div class="card-body p-0">
+        <table>
+            <thead><tr><th>Type</th><th>Message</th><th>Read</th><th>Date</th></tr></thead>
+            <tbody>
+                {% for n in notifications %}
+                <tr>
+                    <td><span class="badge badge-submitted">{{ n.notification_type }}</span></td>
+                    <td>{{ n.message }}</td>
+                    <td>{% if n.is_read %}<span class="text-muted">✓</span>{% else %}<span style="color:var(--primary);">●</span>{% endif %}</td>
+                    <td class="text-muted text-sm">{{ n.created_at|timesince }} ago</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-muted text-sm" style="text-align:center;padding:20px;">No notifications</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,237 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}{{ task.title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex gap-3" style="flex-wrap:wrap;">
+    <!-- Main Column -->
+    <div style="flex:2; min-width:400px;">
+        <!-- Task Info Card -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h3>{{ task.title }}</h3>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'dashboard:task-edit' pk=task.pk %}" class="btn btn-outline btn-sm">
+                        <span class="material-icons-round">edit</span> Edit
+                    </a>
+                    <form method="post" action="{% url 'dashboard:task-delete' pk=task.pk %}"
+                          onsubmit="return confirm('Delete this task?')">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-sm">
+                            <span class="material-icons-round">delete</span> Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="d-flex gap-2 mb-2 flex-wrap">
+                    <span class="badge badge-{{ task.status|lower }}">{{ task.get_status_display }}</span>
+                    <span class="badge badge-{{ task.priority|lower }}">{{ task.get_priority_display }}</span>
+                    {% if task.due_date %}
+                        <span class="badge" style="background:#f1f5f9;color:#475569;">
+                            Due: {{ task.due_date|date:"M d, Y" }}
+                        </span>
+                    {% endif %}
+                </div>
+
+                {% if task.description %}
+                    <p style="margin:16px 0; line-height:1.7;">{{ task.description }}</p>
+                {% else %}
+                    <p class="text-muted" style="margin:16px 0;">No description provided.</p>
+                {% endif %}
+
+                <div class="form-row mt-2" style="font-size:14px;">
+                    <div>
+                        <strong>Creator:</strong>
+                        <a href="{% url 'dashboard:user-detail' pk=task.creator.pk %}" style="color:var(--primary);text-decoration:none;">
+                            {{ task.creator.username }}
+                        </a>
+                    </div>
+                    <div>
+                        <strong>Reviewer:</strong>
+                        {% if task.reviewer %}
+                            <a href="{% url 'dashboard:user-detail' pk=task.reviewer.pk %}" style="color:var(--primary);text-decoration:none;">
+                                {{ task.reviewer.username }}
+                            </a>
+                        {% else %}
+                            <span class="text-muted">Not assigned</span>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <strong>Created:</strong> {{ task.created_at|date:"M d, Y H:i" }}
+                    </div>
+                    <div>
+                        <strong>Updated:</strong> {{ task.updated_at|date:"M d, Y H:i" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Workflow Actions -->
+        <div class="card mb-3">
+            <div class="card-header"><h3>Workflow Actions</h3></div>
+            <div class="card-body">
+                <form method="post" action="{% url 'dashboard:task-transition' pk=task.pk %}" class="d-flex gap-2 flex-wrap align-center">
+                    {% csrf_token %}
+                    {% if task.status == "DRAFT" %}
+                        <input type="hidden" name="to_status" value="SUBMITTED">
+                        <input type="text" name="remarks" class="form-control" placeholder="Remarks (optional)" style="max-width:300px;">
+                        <button type="submit" class="btn btn-info">
+                            <span class="material-icons-round">send</span> Submit for Review
+                        </button>
+                    {% elif task.status == "SUBMITTED" %}
+                        <input type="text" name="remarks" class="form-control" placeholder="Remarks (optional)" style="max-width:300px;">
+                        <button type="submit" name="to_status" value="APPROVED" class="btn btn-success">
+                            <span class="material-icons-round">check_circle</span> Approve
+                        </button>
+                        <button type="submit" name="to_status" value="REJECTED" class="btn btn-danger">
+                            <span class="material-icons-round">cancel</span> Reject
+                        </button>
+                    {% elif task.status == "REJECTED" %}
+                        <input type="hidden" name="to_status" value="DRAFT">
+                        <input type="text" name="remarks" class="form-control" placeholder="Remarks (optional)" style="max-width:300px;">
+                        <button type="submit" class="btn btn-warning">
+                            <span class="material-icons-round">undo</span> Revert to Draft
+                        </button>
+                    {% elif task.status == "APPROVED" %}
+                        <p class="text-muted"><span class="material-icons-round" style="vertical-align:middle;color:var(--accent);">check_circle</span> This task is approved. No further actions available.</p>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+
+        <!-- Comments -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h3>Comments ({{ task.comments.count }})</h3>
+            </div>
+            <div class="card-body">
+                {% for comment in task.comments.all %}
+                <div class="activity-item">
+                    <div class="topbar-avatar" style="width:32px;height:32px;font-size:12px;flex-shrink:0;">
+                        {{ comment.author.username.0|upper }}
+                    </div>
+                    <div style="flex:1;">
+                        <div class="d-flex justify-between">
+                            <strong style="font-size:14px;">{{ comment.author.username }}</strong>
+                            <span class="text-muted text-sm">{{ comment.created_at|timesince }} ago</span>
+                        </div>
+                        <p style="margin-top:4px; font-size:14px; line-height:1.6;">{{ comment.content }}</p>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted text-sm" style="text-align:center; padding:16px;">No comments yet.</p>
+                {% endfor %}
+
+                {% if task.status not in "APPROVED,REJECTED" %}
+                <form method="post" action="{% url 'dashboard:task-comment' pk=task.pk %}" class="mt-2">
+                    {% csrf_token %}
+                    {{ comment_form.content }}
+                    <button type="submit" class="btn btn-primary btn-sm mt-1">
+                        <span class="material-icons-round">add_comment</span> Add Comment
+                    </button>
+                </form>
+                {% else %}
+                <p class="text-muted text-sm mt-2" style="text-align:center;">This task is closed. Comments are disabled.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Status History Timeline -->
+        <div class="card">
+            <div class="card-header"><h3>Status History</h3></div>
+            <div class="card-body">
+                {% for h in task.history.all %}
+                <div class="activity-item">
+                    <div class="activity-dot" style="{% if h.to_status == 'APPROVED' %}background:var(--accent){% elif h.to_status == 'REJECTED' %}background:var(--danger){% elif h.to_status == 'SUBMITTED' %}background:var(--info){% endif %}"></div>
+                    <div>
+                        <div class="activity-text">
+                            <strong>{{ h.changed_by.username|default:"System" }}</strong>
+                            {% if h.from_status %}
+                                changed status from <span class="badge badge-{{ h.from_status|lower }}">{{ h.from_status }}</span>
+                            {% else %}
+                                set status
+                            {% endif %}
+                            to <span class="badge badge-{{ h.to_status|lower }}">{{ h.to_status }}</span>
+                        </div>
+                        {% if h.remarks %}<p class="text-muted text-sm" style="margin-top:2px;">{{ h.remarks }}</p>{% endif %}
+                        <div class="activity-time">{{ h.changed_at|date:"M d, Y H:i" }}</div>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted text-sm" style="text-align:center; padding:16px;">No history yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Column -->
+    <div style="flex:1; min-width:280px;">
+        <!-- Assignees -->
+        <div class="card mb-3">
+            <div class="card-header"><h3>Assignees</h3></div>
+            <div class="card-body">
+                {% for a in task.assignees.all %}
+                <div class="d-flex align-center gap-2" style="margin-bottom:8px;">
+                    <div class="topbar-avatar" style="width:28px;height:28px;font-size:11px;">{{ a.username.0|upper }}</div>
+                    <span style="font-size:14px;">{{ a.username }}</span>
+                </div>
+                {% empty %}
+                <p class="text-muted text-sm">No assignees</p>
+                {% endfor %}
+
+                {% if task.status not in "APPROVED,REJECTED" %}
+                <form method="post" action="{% url 'dashboard:task-assignees' pk=task.pk %}" class="mt-2">
+                    {% csrf_token %}
+                    <label class="text-sm" style="font-weight:600; margin-bottom:4px; display:block;">Update Assignees</label>
+                    {{ assignees_form.assignees }}
+                    <button type="submit" class="btn btn-primary btn-sm mt-1" style="width:100%;">
+                        <span class="material-icons-round">group_add</span> Update
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Attachments -->
+        <div class="card mb-3">
+            <div class="card-header"><h3>Attachments ({{ task.attachments.count }})</h3></div>
+            <div class="card-body">
+                {% for att in task.attachments.all %}
+                <div class="d-flex justify-between align-center" style="margin-bottom:10px; padding:8px 0; border-bottom:1px solid var(--border);">
+                    <div>
+                        <a href="{{ att.file.url }}" target="_blank" style="color:var(--primary);text-decoration:none;font-size:13px;font-weight:500;">
+                            <span class="material-icons-round" style="font-size:16px;vertical-align:middle;">attach_file</span>
+                            {{ att.original_filename }}
+                        </a>
+                        <p class="text-muted" style="font-size:11px;">{{ att.file_size|filesizeformat }} · {{ att.uploaded_by.username }}</p>
+                    </div>
+                    {% if task.status not in "APPROVED,REJECTED" %}
+                    <form method="post" action="{% url 'dashboard:task-attachment-delete' pk=task.pk attachment_pk=att.pk %}"
+                          onsubmit="return confirm('Delete this attachment?')">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-sm" style="padding:4px 8px;">
+                            <span class="material-icons-round" style="font-size:16px;">close</span>
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <p class="text-muted text-sm">No attachments</p>
+                {% endfor %}
+
+                {% if task.status not in "APPROVED,REJECTED" %}
+                <form method="post" action="{% url 'dashboard:task-attachment' pk=task.pk %}"
+                      enctype="multipart/form-data" class="mt-2">
+                    {% csrf_token %}
+                    {{ attachment_form.file }}
+                    <button type="submit" class="btn btn-primary btn-sm mt-1" style="width:100%;">
+                        <span class="material-icons-round">upload_file</span> Upload
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

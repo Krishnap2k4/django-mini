@@ -30,6 +30,10 @@ class JWTAuthMiddleware(BaseMiddleware):
     """
 
     async def __call__(self, scope, receive, send):
+        # If the user is already authenticated via Django sessions, keep it.
+        if scope.get("user") and not scope["user"].is_anonymous:
+            return await super().__call__(scope, receive, send)
+
         query_string = scope.get("query_string", b"").decode()
         params = parse_qs(query_string)
         token_list = params.get("token", [])

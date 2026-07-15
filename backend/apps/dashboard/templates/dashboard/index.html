@@ -1,0 +1,248 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Stat Cards -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon purple">
+            <span class="material-icons-round">people</span>
+        </div>
+        <div class="stat-info">
+            <h4>{{ total_users }}</h4>
+            <p>Total Users ({{ active_users }} active)</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon blue">
+            <span class="material-icons-round">assignment</span>
+        </div>
+        <div class="stat-info">
+            <h4>{{ total_tasks }}</h4>
+            <p>Total Tasks</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon orange">
+            <span class="material-icons-round">pending_actions</span>
+        </div>
+        <div class="stat-info">
+            <h4>{{ pending_reviews }}</h4>
+            <p>Pending Reviews</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon red">
+            <span class="material-icons-round">notifications_active</span>
+        </div>
+        <div class="stat-info">
+            <h4>{{ unread_notifications }}</h4>
+            <p>Unread Notifications</p>
+        </div>
+    </div>
+</div>
+
+<!-- Status Breakdown -->
+<div class="stats-grid" style="margin-bottom:24px">
+    <div class="stat-card">
+        <div class="stat-icon" style="background:linear-gradient(195deg,#94a3b8,#64748b)">
+            <span class="material-icons-round">edit_note</span>
+        </div>
+        <div class="stat-info">
+            <h4>{{ tasks_by_status.DRAFT }}</h4>
+            <p>Draft Tasks</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon blue">
+            <span class="material-icons-round">send</span>
+        </div>
+        <div class="stat-info">
+            <h4>{{ tasks_by_status.SUBMITTED }}</h4>
+            <p>Submitted</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon green">
+            <span class="material-icons-round">check_circle</span>
+        </div>
+        <div class="stat-info">
+            <h4>{{ tasks_by_status.APPROVED }}</h4>
+            <p>Approved</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon red">
+            <span class="material-icons-round">cancel</span>
+        </div>
+        <div class="stat-info">
+            <h4>{{ tasks_by_status.REJECTED }}</h4>
+            <p>Rejected</p>
+        </div>
+    </div>
+</div>
+
+<!-- Charts -->
+<div class="charts-grid">
+    <div class="card">
+        <div class="card-header">
+            <h3>Tasks Created (Last 30 Days)</h3>
+        </div>
+        <div class="card-body">
+            <canvas id="tasksChart" height="120"></canvas>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <h3>Status Distribution</h3>
+        </div>
+        <div class="card-body" style="display:flex; align-items:center; justify-content:center;">
+            <canvas id="statusChart" height="200" style="max-width:280px;"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions + Recent Activity -->
+<div class="charts-grid">
+    <!-- Quick Actions -->
+    <div class="card">
+        <div class="card-header">
+            <h3>Quick Actions</h3>
+        </div>
+        <div class="card-body d-flex gap-2 flex-wrap">
+            <a href="{% url 'dashboard:user-create' %}" class="btn btn-primary">
+                <span class="material-icons-round">person_add</span> New User
+            </a>
+            <a href="{% url 'dashboard:task-create' %}" class="btn btn-info">
+                <span class="material-icons-round">add_task</span> New Task
+            </a>
+            <a href="{% url 'dashboard:notification-send' %}" class="btn btn-success">
+                <span class="material-icons-round">send</span> Send Notification
+            </a>
+            <form method="post" action="{% url 'dashboard:trigger-digest' %}" style="display:inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-warning">
+                    <span class="material-icons-round">email</span> Trigger Daily Digest
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="card">
+        <div class="card-header">
+            <h3>Recent Activity</h3>
+            <a href="{% url 'dashboard:audit-log' %}" class="btn btn-outline btn-sm">View All</a>
+        </div>
+        <div class="card-body" style="max-height:300px; overflow-y:auto;">
+            {% for entry in recent_activity %}
+            <div class="activity-item">
+                <div class="activity-dot"></div>
+                <div>
+                    <div class="activity-text">
+                        <strong>{{ entry.changed_by.username|default:"System" }}</strong>
+                        changed <strong>{{ entry.task.title }}</strong>
+                        → <span class="badge badge-{{ entry.to_status|lower }}">{{ entry.to_status }}</span>
+                    </div>
+                    <div class="activity-time">{{ entry.changed_at|timesince }} ago</div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state">
+                <span class="material-icons-round">history</span>
+                <p>No recent activity</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Recent Tasks Table -->
+<div class="card">
+    <div class="card-header">
+        <h3>Recent Tasks</h3>
+        <a href="{% url 'dashboard:task-list' %}" class="btn btn-outline btn-sm">View All</a>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Creator</th>
+                        <th>Status</th>
+                        <th>Priority</th>
+                        <th>Created</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in recent_tasks %}
+                    <tr>
+                        <td><a href="{% url 'dashboard:task-detail' pk=task.pk %}" style="color:var(--primary);text-decoration:none;font-weight:500;">{{ task.title }}</a></td>
+                        <td>{{ task.creator.username }}</td>
+                        <td><span class="badge badge-{{ task.status|lower }}">{{ task.status }}</span></td>
+                        <td><span class="badge badge-{{ task.priority|lower }}">{{ task.priority }}</span></td>
+                        <td class="text-muted text-sm">{{ task.created_at|timesince }} ago</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Tasks Created chart (bar)
+const tasksCtx = document.getElementById('tasksChart').getContext('2d');
+new Chart(tasksCtx, {
+    type: 'bar',
+    data: {
+        labels: {{ chart_labels|safe }},
+        datasets: [{
+            label: 'Tasks Created',
+            data: {{ chart_data|safe }},
+            backgroundColor: 'rgba(124, 58, 237, 0.7)',
+            borderRadius: 6,
+            borderSkipped: false,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1 } },
+            x: { grid: { display: false } }
+        }
+    }
+});
+
+// Status Distribution chart (doughnut)
+const statusCtx = document.getElementById('statusChart').getContext('2d');
+new Chart(statusCtx, {
+    type: 'doughnut',
+    data: {
+        labels: {{ status_labels|safe }},
+        datasets: [{
+            data: {{ status_data|safe }},
+            backgroundColor: [
+                '#94a3b8',  // Draft
+                '#3b82f6',  // Submitted
+                '#06d6a0',  // Approved
+                '#ef4444',  // Rejected
+            ],
+            borderWidth: 0,
+        }]
+    },
+    options: {
+        responsive: true,
+        cutout: '65%',
+        plugins: {
+            legend: { position: 'bottom', labels: { padding: 16, font: { size: 12 } } }
+        }
+    }
+});
+</script>
+{% endblock %}

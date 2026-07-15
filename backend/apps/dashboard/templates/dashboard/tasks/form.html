@@ -1,0 +1,68 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width:700px;">
+    <div class="card-header">
+        <h3>{{ title }}</h3>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="id_title">Title</label>
+                {{ form.title }}
+                {% if form.title.errors %}<p class="form-text" style="color:var(--danger)">{{ form.title.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="form-group">
+                <label for="id_description">Description</label>
+                {{ form.description }}
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="id_creator">Creator</label>
+                    {{ form.creator }}
+                </div>
+                <div class="form-group">
+                    <label for="id_reviewer">Reviewer</label>
+                    {{ form.reviewer }}
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="id_assignees">Assignees</label>
+                {{ form.assignees }}
+                <p class="form-text">Hold Ctrl/Cmd to select multiple assignees.</p>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="id_status">Status</label>
+                    {{ form.status }}
+                </div>
+                <div class="form-group">
+                    <label for="id_priority">Priority</label>
+                    {{ form.priority }}
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="id_due_date">Due Date</label>
+                {{ form.due_date }}
+            </div>
+
+            {% if form.non_field_errors %}
+                {% for error in form.non_field_errors %}
+                    <div class="alert alert-error">{{ error }}</div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="d-flex gap-2 mt-2">
+                <button type="submit" class="btn btn-primary">
+                    <span class="material-icons-round">save</span>
+                    {% if editing %}Update Task{% else %}Create Task{% endif %}
+                </button>
+                <a href="{% url 'dashboard:task-list' %}" class="btn btn-outline">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

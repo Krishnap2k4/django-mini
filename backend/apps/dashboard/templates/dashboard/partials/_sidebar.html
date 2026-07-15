@@ -1,0 +1,45 @@
+{% url 'dashboard:home' as home_url %}
+{% url 'dashboard:user-list' as user_url %}
+{% url 'dashboard:task-list' as task_url %}
+{% url 'dashboard:notification-list' as notif_url %}
+{% url 'dashboard:audit-log' as audit_url %}
+{% url 'dashboard:notification-send' as send_url %}
+
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <span class="material-icons-round">verified</span>
+        <span>Task Approval</span>
+    </div>
+    <nav class="sidebar-nav">
+        <div class="nav-section">Main</div>
+        <a href="{{ home_url }}" class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+            <span class="material-icons-round">dashboard</span> Dashboard
+        </a>
+
+        <div class="nav-section">Management</div>
+        <a href="{{ user_url }}" class="{% if 'user' in request.resolver_match.url_name %}active{% endif %}">
+            <span class="material-icons-round">people</span> Users
+        </a>
+        <a href="{{ task_url }}" class="{% if 'task' in request.resolver_match.url_name %}active{% endif %}">
+            <span class="material-icons-round">assignment</span> Tasks
+        </a>
+
+        <div class="nav-section">Communication</div>
+        <a href="{{ notif_url }}" class="{% if request.resolver_match.url_name == 'notification-list' %}active{% endif %}">
+            <span class="material-icons-round">notifications</span> Notifications
+        </a>
+        <a href="{{ send_url }}" class="{% if request.resolver_match.url_name == 'notification-send' %}active{% endif %}">
+            <span class="material-icons-round">send</span> Send Notification
+        </a>
+
+        <div class="nav-section">Reports</div>
+        <a href="{{ audit_url }}" class="{% if request.resolver_match.url_name == 'audit-log' %}active{% endif %}">
+            <span class="material-icons-round">history</span> Audit Log
+        </a>
+    </nav>
+    <div class="sidebar-footer">
+        <a href="{% url 'dashboard:logout' %}">
+            <span class="material-icons-round">logout</span> Sign Out
+        </a>
+    </div>
+</aside>

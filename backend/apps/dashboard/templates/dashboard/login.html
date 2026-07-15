@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — Task Approval System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        body::before {
+            content: '';
+            position: absolute;
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(124,58,237,0.2) 0%, transparent 70%);
+            top: -100px; right: -100px;
+            border-radius: 50%;
+        }
+        body::after {
+            content: '';
+            position: absolute;
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(6,214,160,0.15) 0%, transparent 70%);
+            bottom: -100px; left: -100px;
+            border-radius: 50%;
+        }
+        .login-card {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 48px 40px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 1;
+        }
+        .login-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .login-icon {
+            width: 64px; height: 64px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #7c3aed, #5b21b6);
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 16px;
+            box-shadow: 0 6px 20px rgba(124,58,237,0.4);
+        }
+        .login-icon .material-icons-round { font-size: 32px; color: #fff; }
+        .login-header h1 { font-size: 24px; font-weight: 700; color: #1e293b; }
+        .login-header p { font-size: 14px; color: #64748b; margin-top: 4px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block; font-size: 13px; font-weight: 600;
+            color: #1e293b; margin-bottom: 6px;
+        }
+        .input-wrapper {
+            position: relative;
+        }
+        .input-wrapper .material-icons-round {
+            position: absolute; left: 14px; top: 50%;
+            transform: translateY(-50%); font-size: 20px; color: #94a3b8;
+        }
+        .input-wrapper input {
+            width: 100%; padding: 12px 14px 12px 44px;
+            font-size: 14px; font-family: inherit;
+            border: 1px solid #e2e8f0; border-radius: 10px;
+            background: #f8fafc; color: #1e293b;
+            transition: all 0.2s;
+        }
+        .input-wrapper input:focus {
+            outline: none; border-color: #7c3aed;
+            box-shadow: 0 0 0 3px rgba(124,58,237,0.1);
+            background: #fff;
+        }
+        .btn-login {
+            width: 100%; padding: 14px;
+            background: linear-gradient(195deg, #7c3aed, #5b21b6);
+            color: #fff; font-size: 15px; font-weight: 600;
+            font-family: inherit;
+            border: none; border-radius: 10px; cursor: pointer;
+            box-shadow: 0 4px 14px rgba(124,58,237,0.4);
+            transition: all 0.2s;
+        }
+        .btn-login:hover {
+            box-shadow: 0 8px 24px rgba(124,58,237,0.5);
+            transform: translateY(-1px);
+        }
+        .error-msg {
+            background: #fee2e2; color: #991b1b;
+            padding: 10px 14px; border-radius: 8px;
+            font-size: 13px; font-weight: 500;
+            margin-bottom: 20px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .login-footer {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="login-header">
+            <div class="login-icon">
+                <span class="material-icons-round">admin_panel_settings</span>
+            </div>
+            <h1>Admin Panel</h1>
+            <p>SuperAdmin access only</p>
+        </div>
+
+        {% if error %}
+            <div class="error-msg">
+                <span class="material-icons-round" style="font-size:18px">error</span>
+                {% if error == 'forbidden' %}
+                    Access denied. SuperAdmin credentials required.
+                {% else %}
+                    {{ error }}
+                {% endif %}
+            </div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="username">Username</label>
+                <div class="input-wrapper">
+                    <span class="material-icons-round">person</span>
+                    <input type="text" id="username" name="username"
+                           value="{{ username|default:'' }}"
+                           placeholder="Enter your username" required autofocus>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <div class="input-wrapper">
+                    <span class="material-icons-round">lock</span>
+                    <input type="password" id="password" name="password"
+                           placeholder="Enter your password" required>
+                </div>
+            </div>
+            <button type="submit" class="btn-login">
+                Sign In
+            </button>
+        </form>
+        <div class="login-footer">
+            Task Approval Workflow System &copy; 2026
+        </div>
+    </div>
+</body>
+</html>

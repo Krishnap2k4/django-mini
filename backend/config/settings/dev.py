@@ -4,5 +4,5 @@ DEBUG = True
 ALLOWED_HOSTS = ["*"]
 AUTH_PASSWORD_VALIDATORS = []
 
-# Dev: print emails to console instead of sending via SMTP
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# Dev: Emails will now send via SMTP (credentials from .env)
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

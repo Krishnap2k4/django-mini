@@ -11,13 +11,22 @@ class Command(BaseCommand):
         parser.add_argument('--department', default='')
 
     def handle(self, *args, **options):
-        user, _ = User.objects.get_or_create(username=options['username'])
-        user.email = options['email']
-        user.role = Role.SUPERADMIN
-        user.department = options['department']
-        user.is_active = True
-        user.is_staff = True
-        user.is_superuser = True
-        user.set_password(options['password'])
-        user.save()
+        username = options['username']
+
+        if User.objects.filter(username=username).exists():
+            self.stderr.write(self.style.ERROR(
+                f"User '{username}' already exists. Use Django admin to edit."
+            ))
+            return
+
+        user = User.objects.create_user(
+            username=username,
+            email=options['email'],
+            password=options['password'],
+            role=Role.SUPERADMIN,
+            department=options['department'],
+            is_active=True,
+            is_staff=True,
+            is_superuser=True,
+        )
         self.stdout.write(self.style.SUCCESS(f"Superadmin '{user.username}' created."))

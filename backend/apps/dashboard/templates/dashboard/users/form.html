@@ -1,0 +1,81 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width:700px;">
+    <div class="card-header">
+        <h3>{{ title }}</h3>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="id_username">Username</label>
+                    {{ form.username }}
+                    {% if form.username.errors %}<p class="form-text" style="color:var(--danger)">{{ form.username.errors.0 }}</p>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="id_email">Email</label>
+                    {{ form.email }}
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="id_first_name">First Name</label>
+                    {{ form.first_name }}
+                </div>
+                <div class="form-group">
+                    <label for="id_last_name">Last Name</label>
+                    {{ form.last_name }}
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="id_role">Role</label>
+                    {{ form.role }}
+                </div>
+                <div class="form-group">
+                    <label for="id_department">Department</label>
+                    {{ form.department }}
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="id_password">Password</label>
+                {{ form.password }}
+                <p class="form-text">{{ form.password.help_text }}</p>
+                {% if form.password.errors %}<p class="form-text" style="color:var(--danger)">{{ form.password.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <div class="form-check">
+                        {{ form.is_active_employee }}
+                        <label for="id_is_active_employee">Active Employee</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="form-check">
+                        {{ form.is_active }}
+                        <label for="id_is_active">Account Active</label>
+                    </div>
+                </div>
+            </div>
+
+            {% if form.non_field_errors %}
+                {% for error in form.non_field_errors %}
+                    <div class="alert alert-error">{{ error }}</div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="d-flex gap-2 mt-2">
+                <button type="submit" class="btn btn-primary">
+                    <span class="material-icons-round">save</span>
+                    {% if editing %}Update User{% else %}Create User{% endif %}
+                </button>
+                <a href="{% url 'dashboard:user-list' %}" class="btn btn-outline">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

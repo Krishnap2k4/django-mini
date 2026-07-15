@@ -1,0 +1,13 @@
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:'info' }}">
+            <span class="material-icons-round">
+                {% if message.tags == 'success' %}check_circle
+                {% elif message.tags == 'error' %}error
+                {% elif message.tags == 'warning' %}warning
+                {% else %}info{% endif %}
+            </span>
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}

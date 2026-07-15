@@ -1,25 +1,15 @@
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.shortcuts import redirect
-from apps.users.models import Role
 
 
-class RoleRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
-    required_role = None
+class SuperAdminRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
+    """Only allows SUPERADMIN users. Redirects others to login."""
+    login_url = '/panel/login/'
 
     def test_func(self):
-        user = self.request.user
-        if not user.is_authenticated:
-            return False
-        if self.required_role == Role.STAFF:
-            # Any authenticated staff/manager/superadmin can view staff dashboard
-            return True
-        elif self.required_role == Role.MANAGER:
-            return user.is_manager   # manager or superadmin
-        elif self.required_role == Role.SUPERADMIN:
-            return user.is_superadmin
-        return False
+        return self.request.user.is_authenticated and self.request.user.is_superadmin
 
     def handle_no_permission(self):
         if self.request.user.is_authenticated:
-            return redirect('dashboard:redirect')  # we'll create a redirect view
+            return redirect('/panel/login/?error=forbidden')
         return super().handle_no_permission()
