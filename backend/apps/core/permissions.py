@@ -19,11 +19,12 @@ class IsCreatorOrSuperAdmin(BasePermission):
 
 
 class CanSubmitTask(BasePermission):
-    """Submit allowed for the creator, any current assignee, or superadmin — while DRAFT."""
+    """Submit (DRAFT→SUBMITTED) or revert (REJECTED→DRAFT) allowed for the
+    creator, any current assignee, or superadmin."""
     def has_object_permission(self, request, view, obj):
         if request.user.is_superadmin:
             return True
-        if obj.status != TaskStatus.DRAFT:
+        if obj.status not in (TaskStatus.DRAFT, TaskStatus.REJECTED):
             return False
         return obj.creator_id == request.user.id or obj.assignees.filter(pk=request.user.id).exists()
 

@@ -33,6 +33,17 @@ class TaskViewSet(viewsets.ModelViewSet):
     ordering = ['-created_at']
     pagination_class = TaskPagination
 
+    def get_queryset(self):
+        qs = self.queryset
+        user = self.request.user
+        if getattr(user, 'role', '') == 'SUPERADMIN' or getattr(user, 'is_superadmin', False):
+            return qs
+        
+        from django.db.models import Q
+        return qs.filter(
+            Q(creator=user) | Q(reviewer=user) | Q(assignees=user)
+        ).distinct()
+
     def get_permissions(self):
         # Base permission: authenticated
         permission_classes = [permissions.IsAuthenticated]
@@ -107,13 +118,33 @@ class TaskViewSet(viewsets.ModelViewSet):
             return Response({'detail': str(e)}, status=status.HTTP_403_FORBIDDEN)
         return Response({'status': 'REJECTED'})
 
+    @action(detail=True, methods=['post'], permission_classes=[CanSubmitTask])
+    def revert(self, request, pk=None):
+        """Revert a REJECTED task back to DRAFT so it can be reworked."""
+        task = self.get_object()
+        try:
+            transition_task(task, to_status='DRAFT', actor=request.user, remarks='Reverted to draft.')
+        except InvalidTransitionError as e:
+            return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except PermissionDeniedError as e:
+            return Response({'detail': str(e)}, status=status.HTTP_403_FORBIDDEN)
+        return Response({'status': 'DRAFT'})
+
 class TaskCommentViewSet(viewsets.ModelViewSet):
     serializer_class = TaskCommentSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         task_id = self.kwargs['task_pk']
-        return TaskComment.objects.filter(task_id=task_id)
+        qs = TaskComment.objects.filter(task_id=task_id)
+        user = self.request.user
+        if getattr(user, 'role', '') == 'SUPERADMIN' or getattr(user, 'is_superadmin', False):
+            return qs
+            
+        from django.db.models import Q
+        return qs.filter(
+            Q(task__creator=user) | Q(task__reviewer=user) | Q(task__assignees=user)
+        ).distinct()
 
     def perform_create(self, serializer):
         task = get_object_or_404(Task, pk=self.kwargs['task_pk'])
@@ -130,7 +161,15 @@ class TaskAttachmentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         task_id = self.kwargs['task_pk']
-        return TaskAttachment.objects.filter(task_id=task_id)
+        qs = TaskAttachment.objects.filter(task_id=task_id)
+        user = self.request.user
+        if getattr(user, 'role', '') == 'SUPERADMIN' or getattr(user, 'is_superadmin', False):
+            return qs
+            
+        from django.db.models import Q
+        return qs.filter(
+            Q(task__creator=user) | Q(task__reviewer=user) | Q(task__assignees=user)
+        ).distinct()
 
     def perform_create(self, serializer):
         task = get_object_or_404(Task, pk=self.kwargs['task_pk'])
@@ -152,7 +191,15 @@ class TaskStatusHistoryViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         task_id = self.kwargs['task_pk']
-        return TaskStatusHistory.objects.filter(task_id=task_id)
+        qs = TaskStatusHistory.objects.filter(task_id=task_id)
+        user = self.request.user
+        if getattr(user, 'role', '') == 'SUPERADMIN' or getattr(user, 'is_superadmin', False):
+            return qs
+            
+        from django.db.models import Q
+        return qs.filter(
+            Q(task__creator=user) | Q(task__reviewer=user) | Q(task__assignees=user)
+        ).distinct()
 
 
 class DashboardCountsView(viewsets.ViewSet):

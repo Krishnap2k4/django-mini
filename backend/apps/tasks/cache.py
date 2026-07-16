@@ -8,23 +8,31 @@ def get_dashboard_counts(user: User) -> dict:
     if cached is not None:
         return cached
 
+    from django.db.models import Q
+    if getattr(user, 'role', '') == 'SUPERADMIN' or getattr(user, 'is_superadmin', False):
+        base_qs = Task.objects.all()
+    else:
+        base_qs = Task.objects.filter(
+            Q(creator=user) | Q(reviewer=user) | Q(assignees=user)
+        ).distinct()
+
     counts = {
-        "draft": Task.objects.filter(creator=user, status=TaskStatus.DRAFT).count(),
-        "unassigned": Task.objects.filter(
-            creator=user, status=TaskStatus.DRAFT,
+        "draft": base_qs.filter(status=TaskStatus.DRAFT).count(),
+        "unassigned": base_qs.filter(
+            status=TaskStatus.DRAFT,
             assignees__isnull=True, reviewer__isnull=True
-        ).distinct().count(),
-        "submitted": Task.objects.filter(creator=user, status=TaskStatus.SUBMITTED).count(),
-        "needs_reviewer": Task.objects.filter(
-            creator=user, status=TaskStatus.SUBMITTED,
+        ).count(),
+        "submitted": base_qs.filter(status=TaskStatus.SUBMITTED).count(),
+        "needs_reviewer": base_qs.filter(
+            status=TaskStatus.SUBMITTED,
             reviewer__isnull=True
         ).count(),
         "pending_review": (
             Task.objects.filter(reviewer=user, status=TaskStatus.SUBMITTED).count()
-            if user.is_manager else 0
+            if getattr(user, 'role', '') in ['MANAGER', 'SUPERADMIN'] else 0
         ),
-        "approved": Task.objects.filter(creator=user, status=TaskStatus.APPROVED).count(),
-        "rejected": Task.objects.filter(creator=user, status=TaskStatus.REJECTED).count(),
+        "approved": base_qs.filter(status=TaskStatus.APPROVED).count(),
+        "rejected": base_qs.filter(status=TaskStatus.REJECTED).count(),
     }
     cache.set(cache_key, counts, timeout=60 * 5)  # 5 minutes
     return counts
